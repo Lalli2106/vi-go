@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vi-Go | Smart Transport Monitoring</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <img src="https://raw.githubusercontent.com/lalli0621/vi-go/main/src/assets/vigo-logo.png" alt="Vi-Go Logo" class="login-logo" onerror="this.style.display='none'">
+
+            <div class="toggle-group">
+                <button class="toggle-btn active" id="loginTab" onclick="switchTab(false)">Log In</button>
+                <button class="toggle-btn" id="signupTab" onclick="switchTab(true)">Sign Up</button>
+            </div>
+
+            <form id="authForm" onsubmit="handleSubmit(event)">
+                <div class="form-group" id="nameGroup" style="display:none">
+                    <label>Full Name</label>
+                    <input type="text" class="form-input" id="nameInput" placeholder="Enter your full name">
+                </div>
+
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" class="form-input" id="emailInput" placeholder="you@example.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" class="form-input" id="passwordInput" placeholder="••••••••" required minlength="6">
+                </div>
+
+                <div id="roleGroup" style="display:none">
+                    <label style="font-size:0.75rem;font-weight:500;color:var(--muted-foreground);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem;display:block">Select Role</label>
+                    <div class="role-selector">
+                        <button type="button" class="role-btn active" id="roleStudent" onclick="selectRole('student')">
+                            <span class="icon">👤</span>
+                            Student / Faculty
+                        </button>
+                        <button type="button" class="role-btn" id="roleDriver" onclick="selectRole('driver')">
+                            <span class="icon">🛡️</span>
+                            Driver
+                        </button>
+                    </div>
+                </div>
+
+                <div id="errorBox" class="error-msg" style="display:none"></div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">Log In</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API = '';
+        let isSignUp = false;
+        let selectedRole = 'student';
+
+        function switchTab(signup) {
+            isSignUp = signup;
+            document.getElementById('loginTab').classList.toggle('active', !signup);
+            document.getElementById('signupTab').classList.toggle('active', signup);
+            document.getElementById('nameGroup').style.display = signup ? 'block' : 'none';
+            document.getElementById('roleGroup').style.display = signup ? 'block' : 'none';
+            document.getElementById('submitBtn').textContent = signup ? 'Create Account' : 'Log In';
+            document.getElementById('errorBox').style.display = 'none';
+        }
+
+        function selectRole(role) {
+            selectedRole = role;
+            document.getElementById('roleStudent').classList.toggle('active', role === 'student');
+            document.getElementById('roleDriver').classList.toggle('active', role === 'driver');
+        }
+
+        async function handleSubmit(e) {
+            e.preventDefault();
+            const errorBox = document.getElementById('errorBox');
+            errorBox.style.display = 'none';
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Please wait...';
+
+            const email = document.getElementById('emailInput').value.trim();
+            const password = document.getElementById('passwordInput').value;
+
+            try {
+                if (isSignUp) {
+                    const name = document.getElementById('nameInput').value.trim();
+                    if (!name) {
+                        showError('Name is required');
+                        return;
+                    }
+                    const res = await fetch(API + '/register', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        credentials: 'include',
+                        body: JSON.stringify({email, password, display_name: name, role: selectedRole})
+                    });
+                    const data = await res.json();
+                    if (!res.ok) { showError(data.error); return; }
+                } else {
+                    const res = await fetch(API + '/login', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        credentials: 'include',
+                        body: JSON.stringify({email, password})
+                    });
+                    const data = await res.json();
+                    if (!res.ok) { showError(data.error); return; }
+                }
+                window.location.href = '/routes.html';
+            } catch (err) {
+                showError('Something went wrong');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = isSignUp ? 'Create Account' : 'Log In';
+            }
+        }
+
+        function showError(msg) {
+            const box = document.getElementById('errorBox');
+            box.textContent = msg;
+            box.style.display = 'block';
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = false;
+            btn.textContent = isSignUp ? 'Create Account' : 'Log In';
+        }
+
+        // Check if already logged in
+        fetch(API + '/me', {credentials: 'include'}).then(r => {
+            if (r.ok) window.location.href = '/routes.html';
+        }).catch(() => {});
+    </script>
+</body>
+</html>

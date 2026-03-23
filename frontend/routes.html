@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vi-Go | Select Route</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="routes-container" style="position:relative">
+        <button class="logout-btn" id="logoutBtn" onclick="handleLogout()" title="Logout">🚪</button>
+
+        <div class="routes-header">
+            <h1>Select Route</h1>
+            <p class="subtitle" id="welcomeText">Loading...</p>
+        </div>
+
+        <div class="routes-grid" id="routesGrid">
+            <p style="text-align:center;color:var(--muted-foreground)">Loading routes...</p>
+        </div>
+    </div>
+
+    <script>
+        const API = '';
+        let currentUser = null;
+
+        async function init() {
+            try {
+                const userRes = await fetch(API + '/me', {credentials: 'include'});
+                if (!userRes.ok) { window.location.href = '/login.html'; return; }
+                currentUser = await userRes.json();
+                document.getElementById('welcomeText').textContent = `Welcome, ${currentUser.display_name} (${currentUser.role})`;
+
+                const routesRes = await fetch(API + '/routes', {credentials: 'include'});
+                const routes = await routesRes.json();
+                renderRoutes(routes);
+            } catch {
+                window.location.href = '/login.html';
+            }
+        }
+
+        function renderRoutes(routes) {
+            const grid = document.getElementById('routesGrid');
+            grid.innerHTML = '';
+            routes.forEach(route => {
+                const card = document.createElement('div');
+                card.className = 'route-card';
+                card.onclick = () => selectRoute(route.id);
+                card.innerHTML = `
+                    <div>
+                        <h2>${route.name}</h2>
+                        <div class="stops-count">${route.stops.length} stops</div>
+                        <div class="route-range">${route.stops[0].name} → ${route.stops[route.stops.length - 1].name}</div>
+                    </div>
+                    <span class="arrow">→</span>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function selectRoute(routeId) {
+            sessionStorage.setItem('selectedRouteId', routeId);
+            window.location.href = '/dashboard.html';
+        }
+
+        async function handleLogout() {
+            await fetch(API + '/logout', {credentials: 'include'});
+            window.location.href = '/login.html';
+        }
+
+        init();
+    </script>
+</body>
+</html>
