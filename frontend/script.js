@@ -188,7 +188,7 @@ function renderSidebar() {
 // ===== Polling =====
 function startPolling() {
     pollData();
-    pollInterval = setInterval(pollData, 1500);
+    pollInterval = setInterval(pollData, 4000);
 }
 
 async function pollData() {
